@@ -16,3 +16,8 @@ public struct Credentials: Codable, Equatable {
         self.account = account
     }
 }
+
+public struct AuthenticationTokens {
+    let refreshToken: String
+    let accessToken: String
+}

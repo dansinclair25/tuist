@@ -190,6 +190,78 @@ public struct Client: APIProtocol {
             }
         )
     }
+    /// Request new tokens.
+    ///
+    /// This endpoint returns new tokens for a given refresh token if the refresh token is valid.
+    ///
+    /// - Remark: HTTP `POST /api/auth/token`.
+    /// - Remark: Generated from `#/paths//api/auth/token/post(refreshToken)`.
+    public func refreshToken(_ input: Operations.refreshToken.Input) async throws
+        -> Operations.refreshToken.Output
+    {
+        try await client.send(
+            input: input,
+            forOperation: Operations.refreshToken.id,
+            serializer: { input in
+                let path = try converter.renderedRequestPath(
+                    template: "/api/auth/token",
+                    parameters: []
+                )
+                var request: OpenAPIRuntime.Request = .init(path: path, method: .post)
+                suppressMutabilityWarning(&request)
+                try converter.setHeaderFieldAsText(
+                    in: &request.headerFields,
+                    name: "accept",
+                    value: "application/json"
+                )
+                request.body = try converter.setOptionalRequestBodyAsJSON(
+                    input.body,
+                    headerFields: &request.headerFields,
+                    transforming: { wrapped in
+                        switch wrapped {
+                        case let .json(value):
+                            return .init(
+                                value: value,
+                                contentType: "application/json; charset=utf-8"
+                            )
+                        }
+                    }
+                )
+                return request
+            },
+            deserializer: { response in
+                switch response.statusCode {
+                case 200:
+                    let headers: Operations.refreshToken.Output.Ok.Headers = .init()
+                    try converter.validateContentTypeIfPresent(
+                        in: response.headerFields,
+                        substring: "application/json"
+                    )
+                    let body: Operations.refreshToken.Output.Ok.Body =
+                        try converter.getResponseBodyAsJSON(
+                            Operations.refreshToken.Output.Ok.Body.jsonPayload.self,
+                            from: response.body,
+                            transforming: { value in .json(value) }
+                        )
+                    return .ok(.init(headers: headers, body: body))
+                case 401:
+                    let headers: Operations.refreshToken.Output.Unauthorized.Headers = .init()
+                    try converter.validateContentTypeIfPresent(
+                        in: response.headerFields,
+                        substring: "application/json"
+                    )
+                    let body: Operations.refreshToken.Output.Unauthorized.Body =
+                        try converter.getResponseBodyAsJSON(
+                            Components.Schemas._Error.self,
+                            from: response.body,
+                            transforming: { value in .json(value) }
+                        )
+                    return .unauthorized(.init(headers: headers, body: body))
+                default: return .undocumented(statusCode: response.statusCode, .init())
+                }
+            }
+        )
+    }
     /// Downloads an artifact from the cache.
     ///
     /// This endpoint returns a signed URL that can be used to download an artifact from the cache.

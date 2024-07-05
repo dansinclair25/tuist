@@ -101,13 +101,19 @@ components:
       title: ArtifactUploadID
       type: object
       x-struct: Elixir.TuistCloudWeb.API.Schemas.ArtifactUploadId
-    AuthenticationToken:
-      description: Token to authenticate the user with.
+    AuthenticationTokens:
+      description: A new user access token to authenticate the user with.
       properties:
-        token:
-          description: User authentication token
+        access_token:
+          description: User access token
           type: string
-      title: AuthenticationToken
+        refresh_token:
+          description: User refresh token
+          type: string
+      required:
+        - access_token
+        - refresh_token
+      title: AuthenticationTokens
       type: object
     CacheArtifactDownloadURL:
       description: The URL to download the artifact from the cache.
@@ -540,10 +546,17 @@ paths:
               schema:
                 description: Token to authenticate the user with.
                 properties:
+                  access_token:
+                    description: User access token
+                    type: string
+                  refresh_token:
+                    description: User refresh token
+                    type: string
                   token:
+                    deprecated: true
                     description: User authentication token
                     type: string
-                title: AuthenticationToken
+                title: AuthenticationTokens
                 type: object
           description: The device code is authenticated
         202:
@@ -559,6 +572,52 @@ paths:
                 $ref: '#/components/schemas/Error'
           description: The request was not accepted, e.g., when the device code is expired
       summary: Get a specific device code.
+      tags: []
+  /api/auth/token:
+    post:
+      callbacks: {}
+      description: This endpoint returns new tokens for a given refresh token if the refresh token is valid.
+      operationId: refreshToken
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                refresh_token:
+                  description: User refresh token
+                  type: string
+              required:
+                - refresh_token
+              type: object
+        description: Organization params
+        required: false
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                description: A new user access token to authenticate the user with.
+                properties:
+                  access_token:
+                    description: User access token
+                    type: string
+                  refresh_token:
+                    description: User refresh token
+                    type: string
+                required:
+                  - access_token
+                  - refresh_token
+                title: AuthenticationTokens
+                type: object
+          description: The refresh token is valid and a new a pair of tokens was generated
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: The refresh token is expired or invalid
+      summary: Request new tokens.
       tags: []
   /api/cache:
     get:
